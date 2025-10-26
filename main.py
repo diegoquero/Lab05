@@ -1,6 +1,11 @@
+from logging import exception
+
 import flet as ft
+from flet.core.textfield import NumbersOnlyInputFilter, TextCapitalization
+
 from alert import AlertManager
 from autonoleggio import Autonoleggio
+
 
 FILE_AUTO = "automobili.csv"
 
@@ -36,11 +41,40 @@ def main(page: ft.Page):
     lista_auto = ft.ListView(expand=True, spacing=5, padding=10, auto_scroll=True)
 
     # Tutti i TextField per le info necessarie per aggiungere una nuova automobile (marca, modello, anno, contatore posti)
-    # TODO
+
+
+    input_marca = ft.TextField( label="Marca")
+    input_modello = ft.TextField(label="Modello")
+    input_anno = ft.TextField(label="Anno")
+
+    def handleAdd(e):
+            currentVal = txtOut.value
+            txtOut.value = currentVal + 1
+            txtOut.update()
+
+    def handleRemove(e):
+            currentVal = txtOut.value
+            txtOut.value = currentVal - 1
+            txtOut.update()
+
+    btnMinus = ft.IconButton(icon=ft.Icons.REMOVE,
+                                 icon_color="green",
+                                 icon_size=24, on_click=handleRemove)
+    btnAdd = ft.IconButton(icon=ft.Icons.ADD,
+                               icon_color="green",
+                               icon_size=24, on_click=handleAdd)
+    txtOut = ft.TextField(width=100, disabled=True,
+                              value=0, border_color="green",
+                              text_align=ft.TextAlign.CENTER)
+    input_contatore = txtOut
+
+
+
 
     # --- FUNZIONI APP ---
     def aggiorna_lista_auto():
         lista_auto.controls.clear()
+        autonoleggio.automobili_ordinate_per_marca()
         for auto in autonoleggio.automobili_ordinate_per_marca():
             stato = "✅" if auto.disponibile else "⛔"
             lista_auto.controls.append(ft.Text(f"{stato} {auto}"))
@@ -58,14 +92,29 @@ def main(page: ft.Page):
         page.update()
 
     # Handlers per la gestione dei bottoni utili all'inserimento di una nuova auto
-    # TODO
+    def conferma_automobile(e):
+        if not     input_anno.value.isnumeric() :
+            raise Exception( alert.show_alert(f"❌ inserire valori numerici per anno "))
+
+        anno = int(input_anno.value)
+        contatore = int(input_contatore.value)
+
+        autonoleggio.aggiungi_automobile(input_marca.value.capitalize(), input_modello.value.capitalize(), anno , contatore)
+
+        input_marca.value = ''
+        input_modello.value = ''
+        input_anno.value = ''
+        input_contatore.value = 0
+        aggiorna_lista_auto()
+
+
 
     # --- EVENTI ---
     toggle_cambia_tema = ft.Switch(label="Tema scuro", value=True, on_change=cambia_tema)
     pulsante_conferma_responsabile = ft.ElevatedButton("Conferma", on_click=conferma_responsabile)
 
     # Bottoni per la gestione dell'inserimento di una nuova auto
-    # TODO
+    btnConfirm = ft.Button(text="Confirm", on_click=conferma_automobile)
 
     # --- LAYOUT ---
     page.add(
@@ -83,7 +132,17 @@ def main(page: ft.Page):
                alignment=ft.MainAxisAlignment.CENTER),
 
         # Sezione 3
-        # TODO
+        ft.Divider(),
+        ft.Text("Aggiungi Automobile", size=20),
+        ft.Row(spacing=15,
+               controls=[input_marca,
+                         input_modello,
+                         input_anno,
+                         btnMinus,
+                         txtOut,
+                         btnAdd],
+               alignment=ft.MainAxisAlignment.CENTER),
+        ft.Row(spacing=15,controls =[btnConfirm], alignment=ft.MainAxisAlignment.CENTER),
 
         # Sezione 4
         ft.Divider(),
